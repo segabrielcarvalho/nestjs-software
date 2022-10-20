@@ -1,0 +1,37 @@
+version: '3'
+
+services:
+  database:
+    image: 'bitnami/postgresql'
+    ports:
+      - '36201:5432'
+    environment:
+      - POSTGRESQL_USERNAME=docker
+      - POSTGRESQL_PASSWORD=docker
+      - POSTGRESQL_DATABASE=api
+    volumes:
+      - 'postgresql_data:/bitnami/postgresql'
+  api:
+    depends_on:
+      - database
+    build:
+      context: ./api
+      dockerfile: Dockerfile.stage
+    ports:
+      - '36202:36202'
+    env_file:
+      - ./config/envfiles/api.env
+  proxy:
+    depends_on:
+      - api
+    image: nginx:1.21
+    volumes:
+      - ./config/proxy/conf.d:/etc/nginx/conf.d
+    ports:
+      - 80:80
+    environment:
+      NGINX_PORT: 80
+
+volumes:
+  postgresql_data:
+    driver: local
